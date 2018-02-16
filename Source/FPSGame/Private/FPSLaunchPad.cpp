@@ -28,28 +28,25 @@ AFPSLaunchPad::AFPSLaunchPad()
 
 void AFPSLaunchPad::HandleOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) 
 {
+	FVector launchVector = GetActorForwardVector();
+	launchVector.Z = 1;
+	launchVector.Normalize();
+	launchVector *= LaunchVelocity;
+
 	ACharacter* character = Cast<ACharacter>(OtherActor);
 	if (character)
 	{
-		FVector launchVector = GetActorForwardVector();
-		launchVector.Z = 1;
-		launchVector.Normalize();
-		launchVector *= LaunchVelocity;
+		
 		character->LaunchPawn(launchVector, true, true);
 
 		UGameplayStatics::SpawnEmitterAtLocation(this, LaunchFX, GetActorLocation());
 
 		UE_LOG(LogTemp, Log, TEXT("A Character should be launching!."));
 	}
-	else
+	else if (OtherComp && OtherComp->IsSimulatingPhysics())
 	{
-		UStaticMeshComponent* box = OtherActor->FindComponentByClass<UStaticMeshComponent>();
-		
-		if (box)
-		{
-			//box->AddImpulse(LaunchVelocity);
-			UE_LOG(LogTemp, Log, TEXT("A Box should be launching!."));
-		}
+		OtherComp->AddImpulse(launchVector, NAME_None, true);
+		UE_LOG(LogTemp, Log, TEXT("A Box should be launching!."));
 	}
 }
 
